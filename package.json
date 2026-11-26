@@ -1,0 +1,15 @@
+{
+  "name": "zombie-shooterings-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Online co-op relay server for Zombie Shooter",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "integrate": "node integrate.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}

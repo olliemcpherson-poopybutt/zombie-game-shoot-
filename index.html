@@ -1,0 +1,3279 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Zombie Shooter - multiplayer and bandit Edition btw if you want to change your colour simply change the html NOT ON THE DOC THOUGH</title>
+
+<style>
+
+* { box-sizing: border-box; }
+
+body { margin:0; padding:12px; background:#111; color:white; text-align:center; font-family:Arial,sans-serif; user-select:none; }
+
+h1 { margin:8px 0; }
+
+#gameLayout { display:flex; align-items:flex-start; justify-content:center; gap:12px; flex-wrap:wrap; margin:14px auto; max-width:2200px; }
+
+#gameArea { position:relative; width:min(100%,1924px); flex:1 1 700px; min-width:0; }
+
+canvas { display:block; width:100%; height:auto; background:#222; border:2px solid #555; cursor:crosshair; }
+
+#sidePanel { flex:0 0 250px; width:250px; background:#191919; border:2px solid #444; padding:12px; text-align:left; }
+
+#sidePanel h2 { margin-top:4px; text-align:center; color:gold; }
+
+.stat { margin:10px 0; font-size:14px; overflow-wrap:anywhere; }
+
+button { width:100%; padding:9px; margin:4px 0; background:#333; border:1px solid #777; color:white; font-weight:bold; cursor:pointer; }
+
+button:hover:not(:disabled) { background:#555; }
+
+button:disabled { opacity:.45; cursor:not-allowed; }
+
+.sectionTitle { color:#8df58d; border-bottom:1px solid #555; padding-bottom:5px; margin-top:18px; }
+
+.hint { color:#aaa; font-size:12px; line-height:1.5; }
+
+#storePanel { display:none; max-width:1500px; margin:12px auto; padding:14px; background:#151515; border:2px solid gold; text-align:left; }
+
+#storePanel h2 { color:gold; text-align:center; }
+
+#storeItems { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:9px; }
+
+.storeItem { padding:10px; background:#202020; border:1px solid #555; font-size:13px; }
+
+.storeItem strong { color:gold; }
+
+.storeItem p { line-height:1.4; }
+
+#storeMessage { text-align:center; min-height:20px; color:#8df58d; }
+
+#pauseBanner { display:none; color:gold; font-weight:bold; text-align:center; }
+
+#achievementPopup { display:none; position:fixed; z-index:20; top:18px; right:18px; width:270px; padding:13px; background:rgba(0,0,0,.94); border:2px solid gold; text-align:left; }
+
+#achievementTitle { color:gold; font-weight:bold; }
+
+#overlay, #startMenu { display:none; position:absolute; inset:0; z-index:10; background:rgba(0,0,0,.88); align-items:center; justify-content:center; flex-direction:column; padding:20px; }
+
+#startMenu { display:flex; }
+
+#startMenu h2 { color:gold; font-size:clamp(28px,4.5vw,56px); margin-bottom:8px; }
+
+#startMenu p { max-width:680px; color:#ddd; line-height:1.6; margin:6px 0 18px; }
+
+.menuButtons { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+
+.menuButtons button { width:220px; padding:14px; font-size:16px; border:2px solid gold; background:#242424; }
+
+.menuButtons button:hover { background:#3a3a3a; }
+
+#overlay h2 { color:red; font-size:clamp(28px,5vw,60px); }
+
+#overlay button { width:190px; }
+
+@media(max-width:750px) { #sidePanel { flex-basis:100%; width:100%; } #gameArea { flex-basis:100%; } }
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<h1>Zombie Shooterings Game Of Aura 🤑</h1>
+
+<p id="controlsBanner">WASD to move | Hold mouse to fire | E to open store | 1-8 to switch weapons</p>
+
+
+
+<div id="gameLayout">
+
+    <div id="gameArea">
+
+        <canvas id="game" width="1920" height="1080"></canvas>
+
+        <div id="startMenu">
+
+            <h2> ZOMBIE SHOOTERINGSIES (potato)</h2>
+
+            <p>
+
+                <strong>1 Player:</strong> WASD to move, Mouse to aim &amp; shoot, 1-8 to switch weapons.<br>
+
+                <strong>2 Players (Vertical Split-Screen):</strong><br>
+
+                • <strong>P1 (Left Screen):</strong> WASD move | Mouse aim &amp; Left-Click fire | 1-8 switch weapon<br>
+
+                • <strong>P2 (Right Screen):</strong> Arrow Keys move | Space / Enter / Shift fire (auto-aims nearest enemy) | Q / RShift cycle weapon<br>
+
+                • Both players share Score, Cash, Achievements, and can press <strong>E</strong> to shop!
+
+            </p>
+
+            <div class="menuButtons">
+
+                <button onclick="startGame(1)">🤮 1 Player</button>
+
+                <button onclick="startGame(2)">💩 2 Players (Split-Screen)</button>
+
+            </div>
+
+        </div>
+
+        
+<!-- ZOMBIE_ONLINE_PATCH_V1 -->
+<style>
+#onlineLobby{position:absolute;z-index:12;inset:8%;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.96);border:2px solid #42e8ff;padding:24px}
+#onlineLobby .onlineCard{width:min(520px,100%);background:#171717;border:1px solid #555;padding:22px;text-align:center}
+#onlineLobby h2{color:#42e8ff}
+#onlineLobby input{width:100%;padding:13px;font-size:22px;text-align:center;text-transform:uppercase;letter-spacing:5px;background:#090909;color:white;border:1px solid #777;margin:8px 0}
+#onlineStatus{min-height:24px;color:#9cff9c}
+#onlineRoomCode{font-size:36px;letter-spacing:7px;color:gold;font-weight:bold;margin:12px}
+#onlineBadge{position:absolute;z-index:5;top:12px;right:12px;padding:8px 12px;background:#06252b;border:1px solid #42e8ff;color:#baf8ff;font-weight:bold;display:none}
+</style>
+<div id="onlineLobby">
+  <div class="onlineCard">
+    <h2>🌐 ONLINE CO-OP</h2>
+    <p>Create a room and send the code to a friend, or join their room.</p>
+    <button id="onlineCreate">CREATE ROOM</button>
+    <input id="onlineCodeInput" maxlength="6" placeholder="ROOM CODE">
+    <button id="onlineJoin">JOIN ROOM</button>
+    <div id="onlineRoomCode"></div>
+    <div id="onlineStatus">Connecting to multiplayer server…</div>
+    <button id="onlineBack">BACK</button>
+  </div>
+</div>
+<div id="onlineBadge">ONLINE</div>
+
+<div id="overlay">
+
+            <h2 id="overlayTitle">GAME OVER</h2>
+
+            <p id="overlayText"></p>
+
+            <div class="menuButtons">
+
+                <button onclick="restartGame()">Play Again</button>
+
+                <button onclick="returnToMenu()">Main Menu</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <aside id="sidePanel">
+
+        <h2>📊 GAME STATS</h2>
+
+        <div class="stat">Mode: <span id="modeStat">10000 Player</span></div>
+
+        <div class="stat">Score: <span id="score">0</span></div>
+
+        <div class="stat">P1 Health: <span id="health">500 / 500</span></div>
+
+        <div class="stat" id="p2HealthRow" style="display:none;">P2 Health: <span id="health2">500 / 500</span></div>
+
+        <div class="stat">Money: $<span id="money">0</span></div>
+
+        <div class="stat">P1 Speed: <span id="speedStat">4</span></div>
+
+        <div class="stat">P1 Weapon: <span id="weaponStat">Minigun</span></div>
+
+        <div class="stat">P1 Cooldown: <span id="cooldownStat">Ready</span></div>
+
+        <div class="stat" id="p2WeaponRow" style="display:none;">P2 Weapon: <span id="weaponStat2">Minigun</span></div>
+
+        <div class="stat" id="p2CooldownRow" style="display:none;">P2 Cooldown: <span id="cooldownStat2">Ready</span></div>
+
+        <div class="stat">Enemies: <span id="enemyCount">0</span></div>
+
+        <div class="stat">Boss wave: <span id="bossWave">1</span></div>
+
+        <div class="stat">Achievements: <span id="achievementCount">0</span></div>
+
+        <button onclick="toggleStore()">🛒 Open / Close Store (E)</button>
+
+        <div id="pauseBanner">⏸ GAME PAUSED WHILE POOPING</div>
+
+        <h3 class="sectionTitle">🏆 Achievemanties</h3>
+
+        <div id="achievementList" class="hint">No achievemanties yet.</div>
+
+        <p class="hint">Store unlocks at 500 score.<br>Each boss kill earns $5.<br>Final battle begins at 1000 score.<br>After the 50-boss final battle, a Bandit wave arrives every 5 minutes.</p>
+
+    </aside>
+
+</div>
+
+
+
+<div id="storePanel">
+
+    <h2>🛒 GUN STORE & UPGRADES</h2>
+
+    <p id="storeMoney">Money: $0</p>
+
+    <p class="hint">Buying a weapon unlocks it for both players. Upgrades apply to both players in 2-Player mode. The game is paused while this store is open.</p>
+
+    <div id="storeMessage"></div>
+
+    <div id="storeItems"></div>
+
+    <button onclick="toggleStore()">Close Store (E)</button>
+
+</div>
+
+
+
+<div id="achievementPopup">
+
+    🏆 <span id="achievementTitle"></span>
+
+    <p id="achievementDescription"></p>
+
+</div>
+
+
+
+<script>
+
+"use strict";
+
+
+
+const canvas = document.getElementById("game");
+
+const ctx = canvas.getContext("2d");
+
+const W = canvas.width;
+
+const H = canvas.height;
+
+const keys = {};
+
+const mouse = { x:W/2, y:H/2 };
+
+
+
+const weaponData = {
+
+    minigun:{name:"Minigun",price:0,cooldown:5,description:"Fires a burst of 1,000 random-direction bullets.",key:"1"},
+
+    shotgun:{name:"Shotgun",price:15,cooldown:1.1,description:"Fires 20 powerful pellets in a wide spread.",key:"2"},
+
+    railgun:{name:"Railgun",price:25,cooldown:2.5,description:"Fires a long piercing ray that instantly defeats every boss it hits.",key:"3"},
+
+    freeze:{name:"Freeze Gun",price:20,cooldown:1.5,description:"Freezes every zombie and boss for 3.5 seconds.",key:"4"},
+
+    molotov:{name:"Molotov",price:20,cooldown:20,description:"Sets the entire map on fire for 5 seconds. Damages normal zombies, never bosses.",key:"5"},
+
+    mortar:{name:"Mortar",price:40,cooldown:20,description:"Eliminates every enemy, including bosses.",key:"6"},
+
+    flamethrower:{name:"Flamethrower",price:30,cooldown:0.15,description:"Streams continuous fire while automatically launching a shotgun burst at nearby zombies.",key:"7"},
+
+    banditFlame:{name:"Bandit Inferno",price:0,cooldown:0.12,description:"SECRET WEAPON: Continuous ultimate inferno spray with automated shotgun blasts.",key:"8"}
+
+};
+
+
+
+let numPlayers = 1;
+
+let players = [];
+
+let player; // alias to players[0] for full compatibility
+
+let zombies,bullets,fireZones,particles,railgunRays;
+
+let score,money,bossWave,bossKills,finalBossKills,normalKills,banditKills;
+
+let achievements,ownedWeapons;
+
+let running,inMenu,gameWon,finalBattle,bossBattle,storeUnlocked,storeOpen;
+
+let gameClock,lastFrame,nextHordeTime,nextBossTime,nextBanditTime;
+
+let popupTimeout;
+
+let globalFireUntil,globalFireNextDamage;
+
+
+
+function createPlayer(id, x, y, color) {
+
+    const weaponLastShot = {};
+
+    for (const wid in weaponData) weaponLastShot[wid] = -Infinity;
+
+    return {
+
+        id,
+
+        x,
+
+        y,
+
+        color,
+
+        radius: 15,
+
+        speed: 4,
+
+        health: 500,
+
+        maxHealth: 500,
+
+        minigunCooldown: 5,
+
+        currentWeapon: "minigun",
+
+        weaponLastShot,
+
+        lastMinigunTime: -Infinity,
+
+        flameShotgunLastShot: 0,
+
+        lastDamageTime: -Infinity,
+
+        shooting: false,
+
+        facingAngle: id === 1 ? 0 : Math.PI
+
+    };
+
+}
+
+
+
+function startGame(playerCount) {
+
+    numPlayers = playerCount;
+
+    inMenu = false;
+
+    document.getElementById("startMenu").style.display = "none";
+
+    document.getElementById("modeStat").textContent = numPlayers === 2 ? "2 Players (Split)" : "1 Player";
+
+    document.getElementById("p2HealthRow").style.display = numPlayers === 2 ? "block" : "none";
+
+    document.getElementById("p2WeaponRow").style.display = numPlayers === 2 ? "block" : "none";
+
+    document.getElementById("p2CooldownRow").style.display = numPlayers === 2 ? "block" : "none";
+
+    document.getElementById("controlsBanner").textContent = numPlayers === 2
+
+        ? "P1: WASD + Mouse | P2: Arrows + Space/Enter/Shift (Q/RShift Weapon) | E: Store | 1-8: P1 Weapon"
+
+        : "WASD to move | Hold mouse to fire | E to open store | 1-8 to switch weapons";
+
+    resetGame();
+
+}
+
+
+
+function returnToMenu() {
+
+    running = false;
+
+    inMenu = true;
+
+    storeOpen = false;
+
+    document.getElementById("overlay").style.display = "none";
+
+    document.getElementById("storePanel").style.display = "none";
+
+    document.getElementById("pauseBanner").style.display = "none";
+
+    document.getElementById("startMenu").style.display = "flex";
+
+}
+
+
+
+function resetGame() {
+
+    if (numPlayers === 2) {
+
+        players = [
+
+            createPlayer(1, W / 2 - 120, H / 2, "cyan"),
+
+            createPlayer(2, W / 2 + 120, H / 2, "#55ff99")
+
+        ];
+
+    } else {
+
+        players = [createPlayer(1, W / 2, H / 2, "cyan")];
+
+    }
+
+    player = players[0];
+
+
+
+    zombies=[];
+
+    bullets=[];
+
+    fireZones=[];
+
+    particles=[];
+
+    railgunRays=[];
+
+    globalFireUntil=-Infinity;
+
+    globalFireNextDamage=0;
+
+    score=0;
+
+    money=0;
+
+    bossWave=1;
+
+    bossKills=0;
+
+    finalBossKills=0;
+
+    normalKills=0;
+
+    banditKills=0;
+
+    nextBanditTime=Infinity;
+
+    achievements=[];
+
+    ownedWeapons=new Set(["minigun"]);
+
+    running=true;
+
+    gameWon=false;
+
+    finalBattle=false;
+
+    bossBattle=false;
+
+    storeUnlocked=false;
+
+    storeOpen=false;
+
+    gameClock=0;
+
+    lastFrame=performance.now();
+
+    nextHordeTime=5;
+
+    nextBossTime=30;
+
+
+
+    document.getElementById("overlay").style.display="none";
+
+    document.getElementById("storePanel").style.display="none";
+
+    document.getElementById("pauseBanner").style.display="none";
+
+    document.getElementById("achievementPopup").style.display="none";
+
+    document.getElementById("storeMessage").textContent="";
+
+    document.getElementById("achievementList").textContent="No achievements yet.";
+
+    buildStore();
+
+    updateUI();
+
+}
+
+
+
+function restartGame(){ resetGame(); }
+
+
+
+function getAlivePlayers() {
+
+    const alive = players.filter(p => p.health > 0);
+
+    return alive.length > 0 ? alive : players;
+
+}
+
+
+
+function getNearestPlayer(x, y) {
+
+    const candidates = getAlivePlayers();
+
+    let nearest = candidates[0];
+
+    let bestDist = Math.hypot(nearest.x - x, nearest.y - y);
+
+    for (let i = 1; i < candidates.length; i++) {
+
+        const d = Math.hypot(candidates[i].x - x, candidates[i].y - y);
+
+        if (d < bestDist) {
+
+            bestDist = d;
+
+            nearest = candidates[i];
+
+        }
+
+    }
+
+    return nearest;
+
+}
+
+
+
+function randomEdgePosition(){
+
+    const side=Math.floor(Math.random()*4);
+
+    if(side===0)return{x:Math.random()*W,y:-40};
+
+    if(side===1)return{x:W+40,y:Math.random()*H};
+
+    if(side===2)return{x:Math.random()*W,y:H+40};
+
+    return{x:-40,y:Math.random()*H};
+
+}
+
+
+
+function spawnZombie(type="normal"){
+
+  const p=randomEdgePosition();
+
+  const z={
+
+    x:p.x,y:p.y,type,dead:false,frozenUntil:0,
+
+    nextShotAt:0,
+
+    radius:20,speed:1.5,
+
+    health:Math.min(1+Math.floor(score/10),3),
+
+    maxHealth:Math.min(1+Math.floor(score/10),3)
+
+  };
+
+  if(type==="boss"){
+
+    z.radius=50;z.speed=0.5;z.health=z.maxHealth=300;
+
+  }else if(type==="final"){
+
+    z.radius=32;z.speed=0.85;z.health=z.maxHealth=180;
+
+  }else if(type==="runner"){
+
+    z.radius=14;z.speed=3.5;z.health=z.maxHealth=2;
+
+  }else if(type==="skeleton"){
+
+    z.radius=18;z.speed=1.8;z.health=z.maxHealth=5;
+
+  }else if(type==="tank"){
+
+    z.radius=32;z.speed=0.6;z.health=z.maxHealth=25;
+
+  }else if(type==="toxic"){
+
+    z.radius=22;z.speed=1.2;z.health=z.maxHealth=8;
+
+  }else if(type==="armored"){
+
+    z.radius=24;z.speed=0.9;z.health=z.maxHealth=15;
+
+  }else if(type==="fire"){
+
+    z.radius=21;z.speed=1.5;z.health=z.maxHealth=12;
+
+  }
+
+  zombies.push(z);
+
+}
+
+
+
+// Every special zombie variant has an exact 1% (0.01) spawn chance; normal zombies fill the remainder
+
+function spawnHorde(){
+
+  const allVariants = ["runner", "skeleton", "tank", "toxic", "armored", "fire"];
+
+  for(let i=0;i<50;i++){
+
+    const roll = Math.random();
+
+    let chosen = "normal";
+
+    for(let v = 0; v < allVariants.length; v++){
+
+      if(roll >= v * 0.01 && roll < (v + 1) * 0.01){
+
+        chosen = allVariants[v];
+
+        break;
+
+      }
+
+    }
+
+    spawnZombie(chosen);
+
+  }
+
+}
+
+
+
+function spawnBandit(){
+
+    if(bossBattle || finalBattle) return;
+
+    const p=randomEdgePosition();
+
+    zombies.push({
+
+        x:p.x,y:p.y,type:"bandit",dead:false,frozenUntil:0,
+
+        nextShotAt:0,radius:58,speed:0.65,
+
+        health:100000,maxHealth:100000
+
+    });
+
+    showMessage("⚠️ THE BANDIT HAS ARRIVED!","A heavily armoured Bandit is hunting you!");
+
+}
+
+
+
+function spawnBossWave(){
+
+    bossBattle=true;
+
+    for(let i=0;i<bossWave;i++) spawnZombie("boss");
+
+    bossWave++;
+
+}
+
+
+
+function startFinalBattle(){
+
+    if(finalBattle)return;
+
+    finalBattle=true;
+
+    bossBattle=false;
+
+    zombies=zombies.filter(z=>z.type==="final");
+
+    for(let i=0;i<50;i++) spawnZombie("final");
+
+    showMessage("FINAL BATTLE!","Fifty final bosses have arrived!");
+
+}
+
+
+
+function unlockStore(){
+
+    if(storeUnlocked)return;
+
+    storeUnlocked=true;
+
+    buildStore();
+
+    showMessage("GUN STORE UNLOCKED","Press E to open the store.");
+
+    unlockAchievement("STORE SHOPPER","Reached 500 score and unlocked the store.");
+
+}
+
+
+
+function toggleStore(){
+
+    if(!running || inMenu)return;
+
+    if(!storeUnlocked){
+
+        showMessage("STORE LOCKED","Reach 500 score to unlock the gun store.");
+
+        return;
+
+    }
+
+    storeOpen=!storeOpen;
+
+    for(const p of players) p.shooting = false;
+
+    document.getElementById("storePanel").style.display=storeOpen?"block":"none";
+
+    document.getElementById("pauseBanner").style.display=storeOpen?"block":"none";
+
+    if(storeOpen)buildStore();
+
+}
+
+
+
+function showStoreMessage(message){ document.getElementById("storeMessage").textContent=message; }
+
+
+
+function buildStore(){
+
+    const container=document.getElementById("storeItems");
+
+    container.replaceChildren();
+
+    document.getElementById("storeMoney").textContent="Money: $"+money;
+
+
+
+    const weaponHeading=document.createElement("h3");
+
+    weaponHeading.className="sectionTitle";
+
+    weaponHeading.textContent="🔫 WEAPONS";
+
+    container.appendChild(weaponHeading);
+
+
+
+    for(const id of Object.keys(weaponData)){
+
+        const w=weaponData[id];
+
+        const item=document.createElement("div");
+
+        item.className="storeItem";
+
+
+
+        const title=document.createElement("strong");
+
+        title.textContent=w.name+(id==="minigun"?" (STARTER)":"");
+
+        item.appendChild(title);
+
+
+
+        const description=document.createElement("p");
+
+        description.textContent=w.description;
+
+        item.appendChild(description);
+
+
+
+        const price=document.createElement("p");
+
+        price.textContent=id==="minigun"?"Free":id==="banditFlame"?"Unlock: Classified Secret":"Price: $"+w.price;
+
+        item.appendChild(price);
+
+
+
+        if(ownedWeapons.has(id)){
+
+            const btnP1=document.createElement("button");
+
+            btnP1.textContent=players[0].currentWeapon===id?(numPlayers===2?"P1 Equipped":"Equipped"):(numPlayers===2?"Equip P1":"Equip");
+
+            btnP1.disabled=players[0].currentWeapon===id;
+
+            btnP1.onclick=()=>{
+
+                players[0].currentWeapon=id;
+
+                showStoreMessage((numPlayers===2?"P1 equipped ":"Equipped ")+w.name+".");
+
+                buildStore();
+
+                updateUI();
+
+            };
+
+            item.appendChild(btnP1);
+
+
+
+            if(numPlayers===2 && players[1]){
+
+                const btnP2=document.createElement("button");
+
+                btnP2.textContent=players[1].currentWeapon===id?"P2 Equipped":"Equip P2";
+
+                btnP2.disabled=players[1].currentWeapon===id;
+
+                btnP2.onclick=()=>{
+
+                    players[1].currentWeapon=id;
+
+                    showStoreMessage("P2 equipped "+w.name+".");
+
+                    buildStore();
+
+                    updateUI();
+
+                };
+
+                item.appendChild(btnP2);
+
+            }
+
+        }else if(id==="banditFlame"){
+
+            const button=document.createElement("button");
+
+            button.textContent="Locked (Secret)";
+
+            button.disabled=true;
+
+            item.appendChild(button);
+
+        }else{
+
+            const button=document.createElement("button");
+
+            button.textContent="Buy for $"+w.price;
+
+            button.onclick=()=>buyWeapon(id);
+
+            item.appendChild(button);
+
+        }
+
+        container.appendChild(item);
+
+    }
+
+
+
+    const upgradeHeading=document.createElement("h3");
+
+    upgradeHeading.className="sectionTitle";
+
+    upgradeHeading.textContent="⚙️ UPGRADES";
+
+    container.appendChild(upgradeHeading);
+
+
+
+    const upgrades=[
+
+        {id:"cooldown",name:"Faster Minigun",price:10,description:"Reduce minigun cooldown by 1 second, down to 1 second."},
+
+        {id:"health",name:"Health Upgrade",price:25,description:"Increase maximum health by 100 and restore up to 100 (also revives downed teammate)."},
+
+        {id:"speed",name:"Player Speed",price:10,description:"Increase movement speed by 0.5."}
+
+    ];
+
+
+
+    for(const upgrade of upgrades){
+
+        const item=document.createElement("div");
+
+        item.className="storeItem";
+
+
+
+        const title=document.createElement("strong");
+
+        title.textContent=upgrade.name;
+
+        item.appendChild(title);
+
+
+
+        const description=document.createElement("p");
+
+        description.textContent=upgrade.description;
+
+        item.appendChild(description);
+
+
+
+        const button=document.createElement("button");
+
+        button.textContent="Buy for $"+upgrade.price;
+
+        button.onclick=()=>buyUpgrade(upgrade.id);
+
+        item.appendChild(button);
+
+
+
+        container.appendChild(item);
+
+    }
+
+}
+
+
+
+function buyWeapon(id){
+
+    const w=weaponData[id];
+
+    if(!w||ownedWeapons.has(id))return;
+
+    if(money<w.price){
+
+        showStoreMessage("Not enough money. Defeat bosses to earn cash.");
+
+        return;
+
+    }
+
+    money-=w.price;
+
+    ownedWeapons.add(id);
+
+    for(const p of players) p.currentWeapon = id;
+
+    showStoreMessage(w.name+" purchased and equipped!");
+
+    buildStore();
+
+    updateUI();
+
+}
+
+
+
+function buyUpgrade(id){
+
+    const upgrades={cooldown:{price:10},health:{price:25},speed:{price:10}};
+
+    const upgrade=upgrades[id];
+
+    if(!upgrade)return;
+
+    if(money<upgrade.price){
+
+        showStoreMessage("Not enough money. Defeat bosses to earn cash.");
+
+        return;
+
+    }
+
+    if(id==="cooldown"&&players[0].minigunCooldown<=1){
+
+        showStoreMessage("Minigun cooldown is already at 1 second minimum.");
+
+        return;
+
+    }
+
+    money-=upgrade.price;
+
+    if(id==="cooldown"){
+
+        for(const p of players){
+
+            p.minigunCooldown=Math.max(1,p.minigunCooldown-1);
+
+        }
+
+        showStoreMessage("Minigun cooldown reduced to "+players[0].minigunCooldown+"s.");
+
+    }
+
+    if(id==="health"){
+
+        for(const p of players){
+
+            p.maxHealth+=100;
+
+            p.health=Math.min(p.maxHealth,p.health+100);
+
+        }
+
+        showStoreMessage("Maximum health increased by 100!");
+
+    }
+
+    if(id==="speed"){
+
+        for(const p of players){
+
+            p.speed+=0.5;
+
+        }
+
+        showStoreMessage("Movement speed increased to "+players[0].speed.toFixed(1)+".");
+
+    }
+
+    buildStore();
+
+    updateUI();
+
+}
+
+
+
+function unlockAchievement(name,description,reward=0){
+
+    if(achievements.includes(name))return;
+
+    achievements.push(name);
+
+    money+=reward;
+
+    document.getElementById("achievementList").innerHTML=achievements.map(a=>"🏆 "+a).join("<br>");
+
+    document.getElementById("achievementCount").textContent=achievements.length;
+
+    showMessage(name,description+(reward>0?" Reward: $"+reward+"!":""));
+
+    if(storeOpen)buildStore();
+
+}
+
+
+
+function checkAchievements(){
+
+    if(score>=1)unlockAchievement("FIRST BLOOD","Defeated your first zombie.",5);
+
+    if(score>=100)unlockAchievement("ZOMBIE APOCALYPSE","Reached 100 score.",10);
+
+    if(score>=250)unlockAchievement("BULLET HELL","Reached 250 score.",15);
+
+    if(score>=500)unlockAchievement("HORDE BREAKER","Reached 500 score.",25);
+
+    if(score>=750)unlockAchievement("UNSTOPPABLE","Reached 750 score.",35);
+
+    if(score>=1000)unlockAchievement("THE GOAT","Reached 1000 score.",50);
+
+    if(bossKills>=1)unlockAchievement("BOSS SLAYER","Defeated your first boss.",20);
+
+    if(bossKills>=10)unlockAchievement("BOSS MASSACRE","Defeated 10 bosses.",50);
+
+    if(bossKills>=25)unlockAchievement("ELITE HUNTER","Defeated 25 bosses.",100);
+
+    if(bossKills>=100)unlockAchievement("APEX PREDATOR","Defeated 100 bosses.",250);
+
+    if(normalKills>=1000)unlockAchievement("ONE-MAN ARMY","Defeated 1,000 normal zombies.",150);
+
+    if(finalBossKills>=50)unlockAchievement("50 BOSS NIGHTMARE","Defeated all 50 final bosses.",200);
+
+    if(banditKills>=1)unlockAchievement("BANDIT BANE","Defeated the Bandit.",100);
+
+    if(banditKills>=5)unlockAchievement("BANDIT'S WORST NIGHTMARE","Defeated five Bandits.",300);
+
+    if(gameWon)unlockAchievement("LEGEND","Completed the final battle.",500);
+
+}
+
+
+
+function showMessage(title,description){
+
+    const popup=document.getElementById("achievementPopup");
+
+    document.getElementById("achievementTitle").textContent=title;
+
+    document.getElementById("achievementDescription").textContent=description;
+
+    popup.style.display="block";
+
+    clearTimeout(popupTimeout);
+
+    popupTimeout=setTimeout(()=>{popup.style.display="none";},2600);
+
+}
+
+
+
+function addBullet(x,y,angle,speed,damage,options={}){
+
+    bullets.push({
+
+        x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+
+        radius:options.radius??3,damage,color:options.color??"orange",
+
+        life:options.life??120,pierce:options.pierce??0,
+
+        freeze:options.freeze??0,type:options.type??"bullet",
+
+        weapon:options.weapon??"minigun",
+
+        hitEnemies:new Set()
+
+    });
+
+}
+
+
+
+function getCameraOffset(p, viewW, viewH) {
+
+    if (numPlayers === 1) return { x: 0, y: 0 };
+
+    const camX = Math.max(0, Math.min(W - viewW, p.x - viewW / 2));
+
+    const camY = Math.max(0, Math.min(H - viewH, p.y - viewH / 2));
+
+    return { x: camX, y: camY };
+
+}
+
+
+
+function getPlayerAimAngle(p){
+
+    if(p.id === 1){
+
+        if(numPlayers === 2){
+
+            const viewW = W / 2;
+
+            const cam = getCameraOffset(p, viewW, H);
+
+            const localX = Math.min(viewW, Math.max(0, mouse.x));
+
+            const worldMouseX = cam.x + localX;
+
+            const worldMouseY = cam.y + mouse.y;
+
+            return Math.atan2(worldMouseY - p.y, worldMouseX - p.x);
+
+        }
+
+        return Math.atan2(mouse.y - p.y, mouse.x - p.x);
+
+    }
+
+    // Player 2 auto-aims at the nearest alive zombie, or faces movement direction
+
+    let nearest = null;
+
+    let minDist = Infinity;
+
+    for(const z of zombies){
+
+        if(z.dead) continue;
+
+        const d = Math.hypot(z.x - p.x, z.y - p.y);
+
+        if(d < minDist){
+
+            minDist = d;
+
+            nearest = z;
+
+        }
+
+    }
+
+    if(nearest){
+
+        p.facingAngle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+
+    }
+
+    return p.facingAngle;
+
+}
+
+
+
+function fireMinigunFor(p){
+
+    if(gameClock - p.lastMinigunTime < p.minigunCooldown) return;
+
+    p.lastMinigunTime = gameClock;
+
+    for(let i=0;i<1000;i++){
+
+        const angle=Math.random()*Math.PI*2;
+
+        addBullet(p.x,p.y,angle,8+Math.random()*5,1,{radius:2,color:"orange",life:100,weapon:"minigun"});
+
+    }
+
+}
+
+
+
+function fireRailgunFor(p, angle){
+
+    const dx=Math.cos(angle);
+
+    const dy=Math.sin(angle);
+
+    let edgeDistance=Infinity;
+
+    if(dx>0)edgeDistance=Math.min(edgeDistance,(W-p.x)/dx);
+
+    if(dx<0)edgeDistance=Math.min(edgeDistance,(0-p.x)/dx);
+
+    if(dy>0)edgeDistance=Math.min(edgeDistance,(H-p.y)/dy);
+
+    if(dy<0)edgeDistance=Math.min(edgeDistance,(0-p.y)/dy);
+
+    const endX=p.x+dx*edgeDistance;
+
+    const endY=p.y+dy*edgeDistance;
+
+    railgunRays.push({x1:p.x,y1:p.y,x2:endX,y2:endY,endTime:gameClock+0.18});
+
+
+
+    for(const z of zombies){
+
+        if(z.dead)continue;
+
+        const alongRay=(z.x-p.x)*dx+(z.y-p.y)*dy;
+
+        if(alongRay<0||alongRay>edgeDistance)continue;
+
+        const nearestX=p.x+dx*alongRay;
+
+        const nearestY=p.y+dy*alongRay;
+
+        const distanceFromRay=Math.hypot(z.x-nearestX,z.y-nearestY);
+
+        if(distanceFromRay<=z.radius+10){
+
+            if(z.type==="bandit"){
+
+                continue;
+
+            }else if(z.type==="boss"||z.type==="final"){
+
+                killZombie(z,"railgun");
+
+            }else{
+
+                z.health-=100;
+
+                if(z.health<=0)killZombie(z);
+
+            }
+
+        }
+
+    }
+
+}
+
+
+
+function igniteWholeMap(){
+
+    globalFireUntil=gameClock+5;
+
+    globalFireNextDamage=gameClock;
+
+    for(let i=0;i<260;i++){
+
+        particles.push({
+
+            x:Math.random()*W,y:Math.random()*H,
+
+            life:25+Math.random()*35,
+
+            color:Math.random()<0.5?"#ff5a00":"#ffd000"
+
+        });
+
+    }
+
+    showMessage("🔥 MAP IGNITED!","The whole map is burning for 5 seconds. Bosses are immune.");
+
+}
+
+
+
+function fireBossBullet(z){
+
+    const target = getNearestPlayer(z.x, z.y);
+
+    const angle=Math.atan2(target.y-z.y,target.x-z.x);
+
+    addBullet(z.x,z.y,angle,6,10,{radius:9,color:"#ff3333",life:240,type:"bossBullet",weapon:"boss"});
+
+}
+
+
+
+function fireBanditFlames(z){
+
+    let target = getNearestPlayer(z.x, z.y);
+
+    let minDist = Math.hypot(target.x - z.x, target.y - z.y);
+
+    for(const enemy of zombies){
+
+        if(enemy.dead || enemy === z) continue;
+
+        const d = Math.hypot(enemy.x - z.x, enemy.y - z.y);
+
+        if(d < minDist){ minDist = d; target = enemy; }
+
+    }
+
+    const angle = Math.atan2(target.y-z.y, target.x-z.x);
+
+    for(let i=0;i<4;i++){
+
+        const spread=(Math.random()-0.5)*0.4;
+
+        addBullet(z.x,z.y,angle+spread,11,14,{radius:10,color:"#ff4500",life:70,type:"banditBullet",weapon:"bandit"});
+
+    }
+
+}
+
+
+
+function fireWeaponFor(p){
+
+    if(!running||storeOpen||p.health<=0)return;
+
+    const wep = p.currentWeapon;
+
+    if(wep==="minigun"){
+
+        fireMinigunFor(p);
+
+        return;
+
+    }
+
+    const w=weaponData[wep];
+
+    if(!w||gameClock-p.weaponLastShot[wep]<w.cooldown)return;
+
+    p.weaponLastShot[wep]=gameClock;
+
+    const angle=getPlayerAimAngle(p);
+
+
+
+    if(wep==="shotgun"){
+
+        for(let i=0;i<20;i++){
+
+            const spread=(Math.random()-0.5)*0.7;
+
+            addBullet(p.x,p.y,angle+spread,14,4,{radius:4,color:"#ffb347",life:80,weapon:"shotgun"});
+
+        }
+
+    }
+
+
+
+    if(wep==="railgun") fireRailgunFor(p, angle);
+
+
+
+    if(wep==="flamethrower"){
+
+        for(let i=0;i<6;i++){
+
+            const spread=(Math.random()-0.5)*0.5;
+
+            addBullet(p.x,p.y,angle+spread,9+Math.random()*3,3,{
+
+                radius:6+Math.random()*3,
+
+                color:Math.random()<0.5?"#ff5a00":"#ffd000",
+
+                life:32,
+
+                type:"flame",
+
+                weapon:"flamethrower"
+
+            });
+
+        }
+
+    }
+
+
+
+    if(wep==="banditFlame"){
+
+        for(let i=0;i<20;i++){
+
+            const spread=(Math.random()-0.5)*0.55;
+
+            addBullet(p.x,p.y,angle+spread,12+Math.random()*5,12,{
+
+                radius:10+Math.random()*4,
+
+                color:Math.random()<0.33?"#00ffff":Math.random()<0.66?"#ff00ff":"#ff4500",
+
+                life:95,
+
+                type:"flame",
+
+                weapon:"banditFlame"
+
+            });
+
+        }
+
+    }
+
+
+
+    if(wep==="freeze"){
+
+        for(const z of zombies){
+
+            if(!z.dead)z.frozenUntil=Math.max(z.frozenUntil,gameClock+3.5);
+
+        }
+
+        for(let i=0;i<80;i++){
+
+            particles.push({
+
+                x:Math.random()*W,y:Math.random()*H,
+
+                life:18+Math.random()*18,color:"#66ddff"
+
+            });
+
+        }
+
+        showMessage("FREEZE RAY!","All zombies and bosses are frozen for 3.5 seconds.");
+
+    }
+
+
+
+    if(wep==="molotov") igniteWholeMap();
+
+
+
+    if(wep==="mortar"){
+
+        const targets=zombies.slice();
+
+        for(const z of targets){
+
+            if(z.type==="bandit"){
+
+                z.health-=20000;
+
+                if(z.health<=0)killZombie(z,"mortar");
+
+            }else{
+
+                killZombie(z,"mortar");
+
+            }
+
+        }
+
+        zombies=zombies.filter(z=>!z.dead);
+
+        bullets=bullets.filter(b=>b.type==="banditBullet");
+
+        fireZones=[];
+
+        showMessage("MORTAR STRIKE!","Normal enemies eliminated!");
+
+    }
+
+}
+
+
+
+function handleFlamethrowerAutoShotgunFor(p){
+
+    if(p.health<=0) return;
+
+    if(gameClock - p.flameShotgunLastShot >= 1.1){
+
+        p.flameShotgunLastShot = gameClock;
+
+        let closestZ = null, minDist = 500;
+
+        for(const z of zombies){
+
+            if(z.dead) continue;
+
+            const d = Math.hypot(z.x-p.x, z.y-p.y);
+
+            if(d < minDist){ minDist = d; closestZ = z; }
+
+        }
+
+        const shotAngle = closestZ ? Math.atan2(closestZ.y-p.y, closestZ.x-p.x) : getPlayerAimAngle(p);
+
+        const count = p.currentWeapon === "banditFlame" ? 16 : 10;
+
+        for(let i=0; i<count; i++){
+
+            const spread = (Math.random()-0.5)*0.5;
+
+            addBullet(p.x, p.y, shotAngle+spread, 15, 4, {
+
+                radius: 4,
+
+                color: p.currentWeapon === "banditFlame" ? "#00ffff" : "#ffb347",
+
+                life: 70,
+
+                weapon: p.currentWeapon
+
+            });
+
+        }
+
+    }
+
+}
+
+
+
+function createFireZone(x,y){
+
+    fireZones.push({x,y,radius:95,endTime:gameClock+6,nextDamage:gameClock});
+
+    for(let i=0;i<35;i++){
+
+        particles.push({
+
+            x:x+(Math.random()-0.5)*130,
+
+            y:y+(Math.random()-0.5)*130,
+
+            life:30,color:Math.random()<0.5?"#ff5a00":"#ffd000"
+
+        });
+
+    }
+
+}
+
+
+
+function killZombie(z,killerWeapon=""){
+
+    if(z.dead)return;
+
+    z.dead=true;
+
+    if(z.type==="bandit"){
+
+        banditKills++;
+
+        score+=500;
+
+        money+=100;
+
+        if(killerWeapon==="shotgun"&&!ownedWeapons.has("banditFlame")){
+
+            ownedWeapons.add("banditFlame");
+
+            unlockAchievement("THE BANDIT'S OWN GUN","Secret weapon unlocked!",500);
+
+            showMessage("SECRET WEAPON UNLOCKED!","Bandit Inferno added to collection!");
+
+        }
+
+    }else if(z.type==="boss"){
+
+        score+=20;
+
+        money+=5;
+
+        bossKills++;
+
+    }else if(z.type==="final"){
+
+        score+=20;
+
+        money+=5;
+
+        bossKills++;
+
+        finalBossKills++;
+
+    }else{
+
+        score+=1;
+
+        normalKills++;
+
+    }
+
+    checkAchievements();
+
+}
+
+
+
+function getCooldownText(p) {
+
+    if (p.health <= 0) return "Downed";
+
+    let remaining;
+
+    if (p.currentWeapon === "minigun") {
+
+        remaining = Math.max(0, p.minigunCooldown - (gameClock - p.lastMinigunTime));
+
+    } else {
+
+        remaining = Math.max(0, weaponData[p.currentWeapon].cooldown - (gameClock - p.weaponLastShot[p.currentWeapon]));
+
+    }
+
+    return remaining <= 0 ? "Ready" : remaining.toFixed(1) + "s";
+
+}
+
+
+
+function updateUI(){
+
+    document.getElementById("score").textContent=score;
+
+    document.getElementById("health").textContent=Math.max(0,Math.ceil(players[0].health))+" / "+players[0].maxHealth;
+
+    document.getElementById("money").textContent=money;
+
+    document.getElementById("speedStat").textContent=players[0].speed.toFixed(1);
+
+    document.getElementById("weaponStat").textContent=weaponData[players[0].currentWeapon].name;
+
+    document.getElementById("cooldownStat").textContent=getCooldownText(players[0]);
+
+    document.getElementById("enemyCount").textContent=zombies.filter(z=>!z.dead).length;
+
+    document.getElementById("bossWave").textContent=bossWave;
+
+    document.getElementById("achievementCount").textContent=achievements.length;
+
+    document.getElementById("storeMoney").textContent="Money: $"+money;
+
+
+
+    if(numPlayers === 2 && players[1]){
+
+        document.getElementById("health2").textContent=Math.max(0,Math.ceil(players[1].health))+" / "+players[1].maxHealth;
+
+        document.getElementById("weaponStat2").textContent=weaponData[players[1].currentWeapon].name;
+
+        document.getElementById("cooldownStat2").textContent=getCooldownText(players[1]);
+
+    }
+
+
+
+    if(score>=500&&!storeUnlocked)unlockStore();
+
+}
+
+
+
+function update(dt){
+
+    if(!running||storeOpen||inMenu)return;
+
+    gameClock+=dt;
+
+
+
+    // Player 1 movement
+
+    const p1 = players[0];
+
+    if(p1.health > 0){
+
+        if(numPlayers === 1){
+
+            if(keys["w"]||keys["arrowup"])p1.y-=p1.speed;
+
+            if(keys["s"]||keys["arrowdown"])p1.y+=p1.speed;
+
+            if(keys["a"]||keys["arrowleft"])p1.x-=p1.speed;
+
+            if(keys["d"]||keys["arrowright"])p1.x+=p1.speed;
+
+        } else {
+
+            if(keys["w"])p1.y-=p1.speed;
+
+            if(keys["s"])p1.y+=p1.speed;
+
+            if(keys["a"])p1.x-=p1.speed;
+
+            if(keys["d"])p1.x+=p1.speed;
+
+        }
+
+        p1.x=Math.max(p1.radius,Math.min(W-p1.radius,p1.x));
+
+        p1.y=Math.max(p1.radius,Math.min(H-p1.radius,p1.y));
+
+    }
+
+
+
+    // Player 2 movement & shooting input (2-Player mode)
+
+    if(numPlayers === 2 && players[1] && players[1].health > 0){
+
+        const p2 = players[1];
+
+        let dx = 0, dy = 0;
+
+        if(keys["arrowup"]) dy -= 1;
+
+        if(keys["arrowdown"]) dy += 1;
+
+        if(keys["arrowleft"]) dx -= 1;
+
+        if(keys["arrowright"]) dx += 1;
+
+        if(dx !== 0 || dy !== 0){
+
+            p2.facingAngle = Math.atan2(dy, dx);
+
+            p2.x += dx * p2.speed;
+
+            p2.y += dy * p2.speed;
+
+        }
+
+        p2.x=Math.max(p2.radius,Math.min(W-p2.radius,p2.x));
+
+        p2.y=Math.max(p2.radius,Math.min(H-p2.radius,p2.y));
+
+        p2.shooting = !!(keys[" "] || keys["enter"] || keys["shift"]);
+
+    }
+
+
+
+    // Weapon firing for all alive players
+
+    for(const p of players){
+
+        if(p.health <= 0) continue;
+
+        if(p.currentWeapon==="flamethrower" || p.currentWeapon==="banditFlame"){
+
+            fireWeaponFor(p);
+
+            handleFlamethrowerAutoShotgunFor(p);
+
+        } else if(p.shooting){
+
+            fireWeaponFor(p);
+
+        }
+
+    }
+
+
+
+    if(!finalBattle){
+
+        if(gameClock>=nextHordeTime&&!bossBattle){
+
+            spawnHorde();
+
+            nextHordeTime=gameClock+5;
+
+        }
+
+        if(gameClock>=nextBossTime&&!bossBattle){
+
+            spawnBossWave();
+
+            nextBossTime=gameClock+30;
+
+        }
+
+    }
+
+
+
+    if(score>=1000&&!finalBattle&&finalBossKills<50)startFinalBattle();
+
+
+
+    for(const z of zombies){
+
+        if(z.dead)continue;
+
+        if(gameClock>=z.frozenUntil&&(z.type==="boss"||z.type==="final")&&gameClock>=z.nextShotAt){
+
+            fireBossBullet(z);
+
+            z.nextShotAt=gameClock+1;
+
+        }
+
+        if(gameClock>=z.frozenUntil&&z.type==="bandit"){
+
+            fireBanditFlames(z);
+
+        }
+
+
+
+        const targetPlayer = getNearestPlayer(z.x, z.y);
+
+        if(gameClock>=z.frozenUntil){
+
+            const angle=Math.atan2(targetPlayer.y-z.y,targetPlayer.x-z.x);
+
+            z.x+=Math.cos(angle)*z.speed;
+
+            z.y+=Math.sin(angle)*z.speed;
+
+        }
+
+
+
+        for(const p of players){
+
+            if(p.health <= 0) continue;
+
+            const distance=Math.hypot(p.x-z.x,p.y-z.y);
+
+            if(distance<p.radius+z.radius*0.7&&gameClock-p.lastDamageTime>=0.25){
+
+                p.health-=z.type==="bandit"?30:z.type==="boss"?15:z.type==="final"?10:2;
+
+                p.lastDamageTime=gameClock;
+
+            }
+
+        }
+
+    }
+
+
+
+    if(gameClock<globalFireUntil&&gameClock>=globalFireNextDamage){
+
+        globalFireNextDamage=gameClock+0.35;
+
+        for(const z of zombies){
+
+            if(z.dead||z.type==="boss"||z.type==="final")continue;
+
+            z.health-=12;
+
+            if(z.health<=0)killZombie(z);
+
+        }
+
+        for(let i=0;i<35;i++){
+
+            particles.push({
+
+                x:Math.random()*W,y:Math.random()*H,
+
+                life:18+Math.random()*20,
+
+                color:Math.random()<0.5?"#ff5a00":"#ffd000"
+
+            });
+
+        }
+
+    }
+
+
+
+    /* Bullet movement and collision handling */
+
+    for(const b of bullets){
+
+        b.x+=b.vx;
+
+        b.y+=b.vy;
+
+        b.life--;
+
+
+
+        if(b.type==="molotov"&&b.life<=1){
+
+            createFireZone(b.x,b.y);
+
+            continue;
+
+        }
+
+
+
+        // Bandit bullets damage players AND zombies
+
+        if(b.type==="banditBullet"){
+
+            let hitPlayer = false;
+
+            for(const p of players){
+
+                if(p.health > 0 && Math.hypot(b.x-p.x,b.y-p.y)<b.radius+p.radius){
+
+                    p.health-=b.damage;
+
+                    b.life=0;
+
+                    hitPlayer = true;
+
+                    break;
+
+                }
+
+            }
+
+            if(hitPlayer) continue;
+
+            for(const z of zombies){
+
+                if(z.dead || z.type==="bandit") continue;
+
+                if(Math.hypot(b.x-z.x,b.y-z.y)<z.radius+b.radius){
+
+                    z.health-=b.damage;
+
+                    if(z.health<=0) killZombie(z,"bandit");
+
+                    b.life=0;
+
+                    break;
+
+                }
+
+            }
+
+            continue;
+
+        }
+
+
+
+        if(b.type==="bossBullet"){
+
+            for(const p of players){
+
+                if(p.health > 0 && Math.hypot(b.x-p.x,b.y-p.y)<b.radius+p.radius){
+
+                    p.health-=b.damage;
+
+                    b.life=0;
+
+                    break;
+
+                }
+
+            }
+
+            continue;
+
+        }
+
+
+
+        // Flames burn/destroy enemy boss and bandit bullets
+
+        if(b.type==="flame"){
+
+            for(const enemyBullet of bullets){
+
+                if((enemyBullet.type==="bossBullet" || enemyBullet.type==="banditBullet") && enemyBullet.life>0){
+
+                    if(Math.hypot(b.x-enemyBullet.x, b.y-enemyBullet.y)<b.radius+enemyBullet.radius+6){
+
+                        enemyBullet.life=0;
+
+                        b.life=0;
+
+                        break;
+
+                    }
+
+                }
+
+            }
+
+        }
+
+
+
+        for(const z of zombies){
+
+            if(z.dead||b.hitEnemies.has(z))continue;
+
+            if(Math.hypot(b.x-z.x,b.y-z.y)<z.radius+b.radius){
+
+                b.hitEnemies.add(z);
+
+                if(b.damage>0){
+
+                    z.health-=b.damage;
+
+                    if(b.freeze>0)z.frozenUntil=Math.max(z.frozenUntil,gameClock+b.freeze);
+
+                    if(z.health<=0)killZombie(z,b.weapon);
+
+                }
+
+                if(b.pierce>0)b.pierce--;
+
+                else b.life=0;
+
+                break;
+
+            }
+
+        }
+
+    }
+
+
+
+    bullets=bullets.filter(b=>b.life>0&&b.x>-100&&b.x<W+100&&b.y>-100&&b.y<H+100);
+
+
+
+    for(const zone of fireZones){
+
+        if(gameClock>=zone.endTime)continue;
+
+        if(gameClock>=zone.nextDamage){
+
+            zone.nextDamage=gameClock+0.35;
+
+            for(const z of zombies){
+
+                if(z.dead||z.type==="boss"||z.type==="final")continue;
+
+                if(Math.hypot(z.x-zone.x,z.y-zone.y)<zone.radius+z.radius*0.4){
+
+                    z.health-=12;
+
+                    if(z.health<=0)killZombie(z);
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+
+    fireZones=fireZones.filter(zone=>gameClock<zone.endTime);
+
+    railgunRays=railgunRays.filter(ray=>gameClock<ray.endTime);
+
+    particles=particles.filter(p=>p.life-->0);
+
+    zombies=zombies.filter(z=>!z.dead);
+
+
+
+    if(bossBattle&&!zombies.some(z=>z.type==="boss")){
+
+        bossBattle=false;
+
+        nextBossTime=gameClock+30;
+
+    }
+
+
+
+    if(finalBattle&&finalBossKills>=50){
+
+        finalBattle=false;
+
+        bossBattle=false;
+
+        nextHordeTime=gameClock+5;
+
+        nextBossTime=gameClock+10;
+
+        nextBanditTime=gameClock+300;
+
+        showMessage("ENDLESS MODE UNLOCKED!","All 50 final bosses defeated! Bandit waves begin in 5 minutes!");
+
+        checkAchievements();
+
+    }
+
+
+
+    if(!finalBattle && !bossBattle && finalBossKills>=50 && gameClock>=nextBanditTime){
+
+        spawnBandit();
+
+        nextBanditTime=gameClock+300;
+
+    }
+
+
+
+    // Clamp downed health at 0
+
+    for(const p of players){
+
+        if(p.health < 0) p.health = 0;
+
+    }
+
+
+
+    if(players.every(p => p.health <= 0)){
+
+        running=false;
+
+        document.getElementById("overlayTitle").textContent="GAME OVER";
+
+        document.getElementById("overlayTitle").style.color="red";
+
+        document.getElementById("overlayText").textContent="Final score: "+score+" | Bosses defeated: "+bossKills;
+
+        document.getElementById("overlay").style.display="flex";
+
+    }
+
+    updateUI();
+
+}
+
+
+
+function drawZombieAppearance(z){
+
+  const frozen=gameClock<z.frozenUntil;
+
+  const baseColor=frozen?"#66ddff":({
+
+    runner:"#7cff35",skeleton:"#e8e3d5",tank:"#59616a",
+
+    toxic:"#7dff00",armored:"#89939d",fire:"#ff641c",
+
+    boss:"red",final:"purple",bandit:"#d89b24",normal:"lime"
+
+  }[z.type]||"lime");
+
+  const targetP = getNearestPlayer(z.x, z.y);
+
+  ctx.save();
+
+  ctx.translate(z.x,z.y);
+
+  ctx.fillStyle=baseColor;
+
+  ctx.strokeStyle="#171717";
+
+  ctx.lineWidth=4;
+
+
+
+  if(z.type==="runner"){
+
+    ctx.rotate(Math.atan2(targetP.y-z.y,targetP.x-z.x));
+
+    ctx.beginPath();ctx.ellipse(0,0,z.radius*1.25,z.radius*0.78,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+    ctx.fillStyle="#f4ffb0";ctx.beginPath();ctx.arc(5,-5,3,0,Math.PI*2);ctx.fill();
+
+    ctx.strokeStyle="#c8ff82";ctx.lineWidth=3;
+
+    ctx.beginPath();ctx.moveTo(-z.radius-8,-7);ctx.lineTo(-z.radius-17,-7);ctx.moveTo(-z.radius-5,2);ctx.lineTo(-z.radius-13,2);ctx.stroke();
+
+  }else if(z.type==="skeleton"){
+
+    ctx.beginPath();ctx.arc(0,0,z.radius,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+    ctx.fillStyle="#222";ctx.beginPath();ctx.arc(-6,-4,4,0,Math.PI*2);ctx.arc(6,-4,4,0,Math.PI*2);ctx.fill();
+
+    ctx.strokeStyle="#777";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-7,8);ctx.lineTo(7,8);ctx.moveTo(-5,5);ctx.lineTo(-5,12);ctx.moveTo(0,5);ctx.lineTo(0,12);ctx.moveTo(5,5);ctx.lineTo(5,12);ctx.stroke();
+
+  }else if(z.type==="tank"){
+
+    ctx.beginPath();ctx.roundRect(-z.radius,-z.radius*0.82,z.radius*2,z.radius*1.64,12);ctx.fill();ctx.stroke();
+
+    ctx.fillStyle="#343a40";ctx.fillRect(-z.radius*0.72,-z.radius*0.25,z.radius*1.44,z.radius*0.5);
+
+    ctx.fillStyle="#ffdf75";ctx.beginPath();ctx.arc(-9,-5,4,0,Math.PI*2);ctx.arc(9,-5,4,0,Math.PI*2);ctx.fill();
+
+    ctx.strokeStyle="#aeb6bf";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-z.radius*0.7,z.radius*0.55);ctx.lineTo(z.radius*0.7,z.radius*0.55);ctx.stroke();
+
+  }else if(z.type==="toxic"){
+
+    ctx.shadowColor="#7dff00";ctx.shadowBlur=24;
+
+    ctx.beginPath();ctx.arc(0,0,z.radius,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+
+    ctx.strokeStyle="#d8ff76";ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,z.radius*0.65,0,Math.PI*2);ctx.stroke();
+
+    ctx.fillStyle="#253b00";ctx.beginPath();ctx.arc(-7,-4,3,0,Math.PI*2);ctx.arc(7,-4,3,0,Math.PI*2);ctx.fill();
+
+    ctx.fillStyle="#dfff8c";ctx.beginPath();ctx.arc(-z.radius*0.65,-z.radius*0.65,4,0,Math.PI*2);ctx.arc(z.radius*0.7,z.radius*0.45,3,0,Math.PI*2);ctx.fill();
+
+  }else if(z.type==="armored"){
+
+    ctx.beginPath();ctx.arc(0,0,z.radius,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+    ctx.fillStyle="#4a535c";ctx.beginPath();ctx.moveTo(-z.radius*0.9,-4);ctx.lineTo(-z.radius*0.65,-z.radius*0.9);ctx.lineTo(z.radius*0.65,-z.radius*0.9);ctx.lineTo(z.radius*0.9,-4);ctx.closePath();ctx.fill();ctx.stroke();
+
+    ctx.fillStyle="#ffdf70";ctx.fillRect(-10,-3,6,4);ctx.fillRect(4,-3,6,4);
+
+    ctx.strokeStyle="#c5cdd4";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-z.radius*0.6,z.radius*0.45);ctx.lineTo(z.radius*0.6,z.radius*0.45);ctx.stroke();
+
+  }else if(z.type==="fire"){
+
+    ctx.shadowColor="#ff3b00";ctx.shadowBlur=22;
+
+    ctx.beginPath();ctx.arc(0,0,z.radius*0.82,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+
+    for(let i=0;i<7;i++){
+
+      const a=(Math.PI*2*i)/7;
+
+      ctx.fillStyle=i%2?"#ffb000":"#fff06a";
+
+      ctx.beginPath();ctx.moveTo(Math.cos(a)*z.radius*0.55,Math.sin(a)*z.radius*0.55);ctx.lineTo(Math.cos(a-0.28)*z.radius*1.45,Math.sin(a-0.28)*z.radius*1.45);ctx.lineTo(Math.cos(a+0.28)*z.radius*1.45,Math.sin(a+0.28)*z.radius*1.45);ctx.closePath();ctx.fill();
+
+    }
+
+    ctx.fillStyle="#501500";ctx.beginPath();ctx.arc(-6,-4,3,0,Math.PI*2);ctx.arc(6,-4,3,0,Math.PI*2);ctx.fill();
+
+  }else{
+
+    ctx.beginPath();ctx.arc(0,0,z.radius,0,Math.PI*2);ctx.fill();
+
+  }
+
+  ctx.restore();
+
+}
+
+
+
+function drawWorld(){
+
+    ctx.strokeStyle="#292929";
+
+    ctx.lineWidth=1;
+
+    for(let x=0;x<=W;x+=60){
+
+        ctx.beginPath();
+
+        ctx.moveTo(x,0);
+
+        ctx.lineTo(x,H);
+
+        ctx.stroke();
+
+    }
+
+    for(let y=0;y<=H;y+=60){
+
+        ctx.beginPath();
+
+        ctx.moveTo(0,y);
+
+        ctx.lineTo(W,y);
+
+        ctx.stroke();
+
+    }
+
+
+
+    // Arena outer border
+
+    ctx.strokeStyle="#555";
+
+    ctx.lineWidth=6;
+
+    ctx.strokeRect(0,0,W,H);
+
+
+
+    if(gameClock<globalFireUntil){
+
+        const flicker=0.09+Math.random()*0.07;
+
+        ctx.save();
+
+        ctx.fillStyle=`rgba(255, 45, 0, ${flicker})`;
+
+        ctx.fillRect(0,0,W,H);
+
+        for(let i=0;i<75;i++){
+
+            const x=(i*317+Math.floor(gameClock*240))%W;
+
+            const y=(i*193+Math.floor(gameClock*150))%H;
+
+            const radius=25+Math.random()*55;
+
+            ctx.globalAlpha=0.12+Math.random()*0.18;
+
+            ctx.fillStyle=Math.random()<0.5?"#ff3c00":"#ffb000";
+
+            ctx.beginPath();
+
+            ctx.ellipse(x,y,radius*0.65,radius,0,0,Math.PI*2);
+
+            ctx.fill();
+
+        }
+
+        ctx.restore();
+
+    }
+
+
+
+    for(const zone of fireZones){
+
+        ctx.save();
+
+        ctx.globalAlpha=0.45+Math.random()*0.12;
+
+        ctx.fillStyle="#ff3c00";
+
+        ctx.beginPath();
+
+        ctx.arc(zone.x,zone.y,zone.radius,0,Math.PI*2);
+
+        ctx.fill();
+
+        ctx.globalAlpha=0.7;
+
+        ctx.strokeStyle="#ffbd00";
+
+        ctx.lineWidth=5;
+
+        ctx.beginPath();
+
+        ctx.arc(zone.x,zone.y,zone.radius*0.7,0,Math.PI*2);
+
+        ctx.stroke();
+
+        ctx.restore();
+
+    }
+
+
+
+    for(const z of zombies){
+
+        if(z.dead)continue;
+
+        drawZombieAppearance(z);
+
+        if(z.type!=="normal"){
+
+          const width=z.radius*2;
+
+          const height=z.type==="bandit"?13:8;
+
+          const x=z.x-z.radius;
+
+          const y=z.y-z.radius-18;
+
+          ctx.fillStyle="#333";ctx.fillRect(x,y,width,height);
+
+          const barColor=z.type==="final"?"#c45cff":z.type==="bandit"?"#ffb000":z.type==="toxic"?"#9dff00":z.type==="fire"?"#ff8a00":z.type==="armored"?"#b9c5d0":z.type==="skeleton"?"#f0eee5":z.type==="tank"?"#89939d":z.type==="runner"?"#7cff35":"#ff4444";
+
+          ctx.fillStyle=barColor;ctx.fillRect(x,y,width*Math.max(0,z.health/z.maxHealth),height);
+
+          if(z.type==="bandit"){
+
+            ctx.fillStyle="white";ctx.font="bold 20px Arial";ctx.textAlign="center";
+
+            ctx.fillText("BANDIT "+Math.ceil(z.health).toLocaleString()+" HP",z.x,y-8);ctx.textAlign="left";
+
+          }
+
+        }
+
+        if(gameClock<z.frozenUntil){
+
+          ctx.strokeStyle="#7deaff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(z.x,z.y,z.radius+7,0,Math.PI*2);ctx.stroke();
+
+        }
+
+    }
+
+
+
+    for(const b of bullets){
+
+        ctx.save();
+
+        if(b.weapon==="banditFlame" || b.type==="banditBullet"){
+
+            ctx.shadowBlur=16;
+
+            ctx.shadowColor=b.color;
+
+            ctx.fillStyle=b.color;
+
+            ctx.beginPath();
+
+            ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);
+
+            ctx.fill();
+
+
+
+            ctx.fillStyle="#ffffff";
+
+            ctx.beginPath();
+
+            ctx.arc(b.x,b.y,b.radius*0.45,0,Math.PI*2);
+
+            ctx.fill();
+
+        }else{
+
+            ctx.fillStyle=b.color;
+
+            ctx.beginPath();
+
+            ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);
+
+            ctx.fill();
+
+        }
+
+        ctx.restore();
+
+    }
+
+
+
+    for(const ray of railgunRays){
+
+        const alpha=Math.max(0,(ray.endTime-gameClock)/0.18);
+
+        ctx.save();
+
+        ctx.globalAlpha=alpha;
+
+        ctx.lineCap="round";
+
+        ctx.strokeStyle="#00dfff";
+
+        ctx.lineWidth=24;
+
+        ctx.shadowColor="#00eaff";
+
+        ctx.shadowBlur=35;
+
+        ctx.beginPath();
+
+        ctx.moveTo(ray.x1,ray.y1);
+
+        ctx.lineTo(ray.x2,ray.y2);
+
+        ctx.stroke();
+
+        ctx.strokeStyle="#66f5ff";
+
+        ctx.lineWidth=11;
+
+        ctx.shadowBlur=20;
+
+        ctx.beginPath();
+
+        ctx.moveTo(ray.x1,ray.y1);
+
+        ctx.lineTo(ray.x2,ray.y2);
+
+        ctx.stroke();
+
+        ctx.strokeStyle="#ffffff";
+
+        ctx.lineWidth=4;
+
+        ctx.shadowBlur=8;
+
+        ctx.beginPath();
+
+        ctx.moveTo(ray.x1,ray.y1);
+
+        ctx.lineTo(ray.x2,ray.y2);
+
+        ctx.stroke();
+
+        ctx.restore();
+
+    }
+
+
+
+    for(const p of particles){
+
+        ctx.globalAlpha=Math.max(0,p.life/30);
+
+        ctx.fillStyle=p.color;
+
+        ctx.fillRect(p.x,p.y,7,7);
+
+    }
+
+    ctx.globalAlpha=1;
+
+
+
+    // Render all players
+
+    for(const p of players){
+
+        if(p.health <= 0){
+
+            ctx.save();
+
+            ctx.globalAlpha = 0.45;
+
+            ctx.fillStyle = "#666";
+
+            ctx.beginPath();
+
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+
+            ctx.fill();
+
+            ctx.fillStyle = "#ff6666";
+
+            ctx.font = "bold 16px Arial";
+
+            ctx.textAlign = "center";
+
+            ctx.fillText("P" + p.id + " DOWN", p.x, p.y - 22);
+
+            ctx.restore();
+
+            continue;
+
+        }
+
+
+
+        ctx.fillStyle = p.color;
+
+        ctx.beginPath();
+
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+
+        ctx.fill();
+
+
+
+        if(numPlayers === 2){
+
+            ctx.fillStyle = "white";
+
+            ctx.font = "bold 16px Arial";
+
+            ctx.textAlign = "center";
+
+            ctx.fillText("P" + p.id, p.x, p.y - 22);
+
+            ctx.textAlign = "left";
+
+        }
+
+
+
+        if(p.currentWeapon !== "minigun"){
+
+            const angle = getPlayerAimAngle(p);
+
+            ctx.strokeStyle = "rgba(255,255,255,0.25)";
+
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+
+            ctx.moveTo(p.x, p.y);
+
+            ctx.lineTo(p.x + Math.cos(angle) * 140, p.y + Math.sin(angle) * 140);
+
+            ctx.stroke();
+
+        }
+
+    }
+
+}
+
+
+
+function drawViewportHUD(p, viewW, viewH) {
+
+    ctx.fillStyle="white";
+
+    ctx.font="24px Arial";
+
+    if(numPlayers === 1){
+
+        ctx.font="28px Arial";
+
+        ctx.fillText("Score: "+score,20,38);
+
+        ctx.fillText("Health: "+Math.ceil(p.health)+"/"+p.maxHealth,20,74);
+
+        ctx.fillText("Enemies: "+zombies.length,20,110);
+
+        ctx.fillText("Boss Wave: "+bossWave,20,146);
+
+        ctx.fillText("Money: $"+money,20,182);
+
+        ctx.fillText("Weapon: "+weaponData[p.currentWeapon].name,20,218);
+
+    } else {
+
+        ctx.fillStyle = p.color;
+
+        ctx.font = "bold 26px Arial";
+
+        ctx.fillText("PLAYER " + p.id + (p.health <= 0 ? " (DOWNED)" : ""), 18, 36);
+
+        ctx.fillStyle = "white";
+
+        ctx.font = "22px Arial";
+
+        ctx.fillText("Health: " + Math.ceil(p.health) + "/" + p.maxHealth, 18, 68);
+
+        ctx.fillText("Weapon: " + weaponData[p.currentWeapon].name + " (" + getCooldownText(p) + ")", 18, 98);
+
+        if (p.id === 1) {
+
+            ctx.fillText("Score: " + score + " | Money: $" + money, 18, 128);
+
+        } else {
+
+            ctx.fillText("Enemies: " + zombies.length + " | Boss Wave: " + bossWave, 18, 128);
+
+        }
+
+    }
+
+}
+
+
+
+function draw(){
+
+    ctx.clearRect(0,0,W,H);
+
+
+
+    if(numPlayers === 1){
+
+        drawWorld();
+
+        drawViewportHUD(players[0], W, H);
+
+    } else {
+
+        // Vertical split-screen: Left half = Player 1, Right half = Player 2
+
+        const halfW = W / 2;
+
+        for(let i = 0; i < 2; i++){
+
+            const p = players[i];
+
+            const viewX = i * halfW;
+
+            const cam = getCameraOffset(p, halfW, H);
+
+
+
+            ctx.save();
+
+            ctx.beginPath();
+
+            ctx.rect(viewX, 0, halfW, H);
+
+            ctx.clip();
+
+
+
+            ctx.translate(viewX - cam.x, -cam.y);
+
+            drawWorld();
+
+            ctx.restore();
+
+
+
+            ctx.save();
+
+            ctx.translate(viewX, 0);
+
+            drawViewportHUD(p, halfW, H);
+
+            ctx.restore();
+
+        }
+
+
+
+        // Center vertical split divider
+
+        ctx.save();
+
+        ctx.strokeStyle = "gold";
+
+        ctx.lineWidth = 6;
+
+        ctx.beginPath();
+
+        ctx.moveTo(halfW, 0);
+
+        ctx.lineTo(halfW, H);
+
+        ctx.stroke();
+
+        ctx.restore();
+
+    }
+
+
+
+    if(gameClock<globalFireUntil){
+
+        const remaining=globalFireUntil-gameClock;
+
+        ctx.save();
+
+        ctx.fillStyle="#fff0a0";
+
+        ctx.font="bold 32px Arial";
+
+        ctx.textAlign="center";
+
+        ctx.fillText("🔥 WHOLE MAP ON FIRE! "+remaining.toFixed(1)+"s 🔥",W/2,H-35);
+
+        ctx.textAlign="left";
+
+        ctx.restore();
+
+    }
+
+
+
+    if(!storeUnlocked && !inMenu){
+
+        ctx.fillStyle="gold";
+
+        ctx.font="24px Arial";
+
+        ctx.fillText("Gun store unlocks at 500 score",20,H-25);
+
+    }
+
+    if(bossBattle){
+
+        ctx.fillStyle="red";
+
+        ctx.font="bold 42px Arial";
+
+        ctx.textAlign="center";
+
+        ctx.fillText("BOSS WAVE!",W/2,55);
+
+        ctx.textAlign="left";
+
+    }
+
+    if(finalBattle&&running){
+
+        ctx.fillStyle="#d18aff";
+
+        ctx.font="bold 42px Arial";
+
+        ctx.textAlign="center";
+
+        ctx.fillText("FINAL BATTLE: "+finalBossKills+" / 50",W/2,55);
+
+        ctx.textAlign="left";
+
+    }
+
+    if(storeOpen){
+
+        ctx.fillStyle="rgba(0,0,0,0.55)";
+
+        ctx.fillRect(0,0,W,H);
+
+        ctx.fillStyle="gold";
+
+        ctx.font="bold 50px Arial";
+
+        ctx.textAlign="center";
+
+        ctx.fillText("GAME PAUSED",W/2,H/2);
+
+        ctx.font="28px Arial";
+
+        ctx.fillText("Close the store to resume",W/2,H/2+50);
+
+        ctx.textAlign="left";
+
+    }
+
+}
+
+
+
+function gameLoop(now){
+
+    const dt=Math.min(0.04,Math.max(0,(now-lastFrame)/1000));
+
+    lastFrame=now;
+
+    update(dt);
+
+    draw();
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+
+
+function updateMouse(e){
+
+    const rect=canvas.getBoundingClientRect();
+
+    mouse.x=(e.clientX-rect.left)*W/rect.width;
+
+    mouse.y=(e.clientY-rect.top)*H/rect.height;
+
+}
+
+
+
+canvas.addEventListener("mousemove",updateMouse);
+
+canvas.addEventListener("mousedown",e=>{
+
+    if(e.button===0&&!storeOpen&&running&&!inMenu){
+
+        players[0].shooting=true;
+
+        fireWeaponFor(players[0]);
+
+    }
+
+});
+
+window.addEventListener("mouseup",()=>{ if(players[0]) players[0].shooting=false; });
+
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+
+
+
+function cycleWeaponFor(p) {
+
+    const unlocked = Object.keys(weaponData).filter(id => ownedWeapons.has(id));
+
+    if (unlocked.length <= 1) return;
+
+    const idx = unlocked.indexOf(p.currentWeapon);
+
+    p.currentWeapon = unlocked[(idx + 1) % unlocked.length];
+
+    updateUI();
+
+}
+
+
+
+window.addEventListener("keydown",e=>{
+
+    const k=e.key.toLowerCase();
+
+    if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k) && !inMenu){
+
+        e.preventDefault();
+
+    }
+
+    keys[k]=true;
+
+    if(inMenu) return;
+
+
+
+    if(k==="e") toggleStore();
+
+
+
+    // Player 2 weapon cycle (Q or Right Shift)
+
+    if(numPlayers === 2 && players[1] && (k === "q" || e.code === "ShiftRight")){
+
+        cycleWeaponFor(players[1]);
+
+    }
+
+
+
+    // Player 1 weapon switching hotkeys 1-8
+
+    for(const id in weaponData){
+
+        if(weaponData[id].key === e.key){
+
+            if(ownedWeapons.has(id)){
+
+                players[0].currentWeapon = id;
+
+                updateUI();
+
+            } else {
+
+                showMessage("WEAPON LOCKED", "Unlock this weapon in the Gun Store (E).");
+
+            }
+
+        }
+
+    }
+
+});
+
+
+
+window.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+
+
+// Initialize state in Start Menu
+
+inMenu = true;
+
+resetGame();
+
+running = false;
+
+requestAnimationFrame(gameLoop);
+
+</script>
+
+<script src="/socket.io/socket.io.js">
+
+/* ZOMBIE_ONLINE_PATCH_V1 */
+const online = {
+  active:false, isHost:false, socket:null, code:"",
+  guestInput:{up:false,down:false,left:false,right:false,shoot:false},
+  lastInputSent:0, lastSnapshot:0, remoteWeapon:null
+};
+
+function onlineStatus(message){
+  const el=document.getElementById("onlineStatus");
+  if(el) el.textContent=message;
+}
+function onlineShowLobby(){
+  document.getElementById("onlineLobby").style.display="flex";
+  onlineStatus("Connecting to multiplayer server…");
+  if(!online.socket){
+    online.socket=io();
+    online.socket.on("connect",()=>onlineStatus("Connected. Create a room or enter a code."));
+    online.socket.on("connect_error",()=>onlineStatus("Could not connect. Refresh and try again."));
+    online.socket.on("room-created",data=>{
+      online.code=data.code; online.isHost=true; online.active=true;
+      startGame(2);
+      document.getElementById("onlineLobby").style.display="none";
+      document.getElementById("onlineBadge").style.display="block";
+      document.getElementById("onlineRoomCode").textContent=data.code;
+      onlineStatus("Room created. Waiting for your friend…");
+      showMessage("ROOM CREATED","Share room code "+data.code+" with your friend.");
+    });
+    online.socket.on("room-joined",data=>{
+      online.code=data.code; online.isHost=false; online.active=true;
+      startGame(2);
+      document.getElementById("onlineLobby").style.display="none";
+      document.getElementById("onlineBadge").style.display="block";
+      onlineStatus("Joined room "+data.code+". Waiting for host state…");
+    });
+    online.socket.on("join-error",msg=>onlineStatus(msg));
+    online.socket.on("guest-joined",()=>showMessage("PLAYER CONNECTED","Your friend joined the game!"));
+    online.socket.on("guest-left",()=>showMessage("PLAYER DISCONNECTED","Your friend left the room."));
+    online.socket.on("room-closed",msg=>{
+      online.active=false; online.isHost=false;
+      document.getElementById("onlineBadge").style.display="none";
+      showMessage("ROOM CLOSED",msg);
+      returnToMenu();
+    });
+    online.socket.on("guest-input",input=>{
+      if(!online.isHost||!players[1])return;
+      online.guestInput=input;
+      if(input.weapon&&ownedWeapons.has(input.weapon))players[1].currentWeapon=input.weapon;
+      if(input.storeToggle)toggleStore();
+    });
+    online.socket.on("guest-action",action=>{
+      if(!online.isHost)return;
+      if(action.type==="buyWeapon")buyWeapon(action.id);
+      if(action.type==="buyUpgrade")buyUpgrade(action.id);
+      if(action.type==="storeToggle")toggleStore();
+    });
+    online.socket.on("snapshot",applyOnlineSnapshot);
+  }
+  if(inMenu){
+    const buttons=document.querySelector("#startMenu .menuButtons");
+    if(buttons&&!document.getElementById("onlineStartButton")){
+      const b=document.createElement("button");
+      b.id="onlineStartButton"; b.textContent="🌐 ONLINE MULTIPLAYER";
+      b.onclick=onlineShowLobby; buttons.appendChild(b);
+    }
+  }
+}
+document.getElementById("onlineCreate").onclick=()=>{
+  if(!online.socket||!online.socket.connected){onlineStatus("Still connecting. Try again in a moment.");return;}
+  online.socket.emit("create-room");
+  onlineStatus("Creating room…");
+};
+document.getElementById("onlineJoin").onclick=()=>{
+  const code=document.getElementById("onlineCodeInput").value.trim().toUpperCase();
+  if(code.length!==6){onlineStatus("Enter the 6-character room code.");return;}
+  if(!online.socket||!online.socket.connected){onlineStatus("Still connecting. Try again in a moment.");return;}
+  online.socket.emit("join-room",code);
+  onlineStatus("Joining room…");
+};
+document.getElementById("onlineBack").onclick=()=>document.getElementById("onlineLobby").style.display="none";
+
+const originalGetCameraOffset=getCameraOffset;
+getCameraOffset=function(p,viewW,viewH){
+  if(online.active)return {x:0,y:0};
+  return originalGetCameraOffset(p,viewW,viewH);
+};
+const originalGetPlayerAimAngle=getPlayerAimAngle;
+getPlayerAimAngle=function(p){
+  if(online.active&&p.id===1)return Math.atan2(mouse.y-p.y,mouse.x-p.x);
+  return originalGetPlayerAimAngle(p);
+};
+const originalBuyWeapon=buyWeapon;
+buyWeapon=function(id){
+  if(online.active&&!online.isHost){online.socket.emit("game-action",{type:"buyWeapon",id});return;}
+  return originalBuyWeapon(id);
+};
+const originalBuyUpgrade=buyUpgrade;
+buyUpgrade=function(id){
+  if(online.active&&!online.isHost){online.socket.emit("game-action",{type:"buyUpgrade",id});return;}
+  return originalBuyUpgrade(id);
+};
+const originalToggleStore=toggleStore;
+toggleStore=function(){
+  if(online.active&&!online.isHost){online.socket.emit("game-action",{type:"storeToggle"});return;}
+  return originalToggleStore();
+};
+
+const originalUpdate=update;
+update=function(dt){
+  if(online.active&&!online.isHost)return;
+  if(online.active&&online.isHost&&players[1]){
+    const i=online.guestInput;
+    // Reuse the game's existing Player 2 movement code with guest WASD mapped to arrows.
+    keys["arrowup"]=!!i.up; keys["arrowdown"]=!!i.down;
+    keys["arrowleft"]=!!i.left; keys["arrowright"]=!!i.right;
+    keys[" "]=!!i.shoot;
+  }
+  return originalUpdate(dt);
+};
+
+const originalDraw=draw;
+draw=function(){
+  if(!online.active){originalDraw();return;}
+  ctx.clearRect(0,0,W,H);
+  drawWorld();
+  ctx.fillStyle="rgba(0,0,0,.65)";ctx.fillRect(12,12,440,118);
+  ctx.fillStyle="white";ctx.font="bold 25px Arial";
+  ctx.fillText("ONLINE CO-OP  |  ROOM "+online.code,26,44);
+  ctx.font="20px Arial";
+  ctx.fillText("P1: "+Math.ceil(players[0].health)+"/"+players[0].maxHealth+" HP",26,76);
+  ctx.fillText("P2: "+Math.ceil(players[1].health)+"/"+players[1].maxHealth+" HP",26,105);
+  ctx.fillText("Score: "+score+"  |  Money: $"+money,26,130);
+  if(bossBattle){ctx.fillStyle="red";ctx.font="bold 42px Arial";ctx.textAlign="center";ctx.fillText("BOSS WAVE!",W/2,65);ctx.textAlign="left";}
+  if(finalBattle){ctx.fillStyle="#d18aff";ctx.font="bold 42px Arial";ctx.textAlign="center";ctx.fillText("FINAL BATTLE: "+finalBossKills+" / 50",W/2,65);ctx.textAlign="left";}
+  if(storeOpen){ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillRect(0,0,W,H);ctx.fillStyle="gold";ctx.font="bold 50px Arial";ctx.textAlign="center";ctx.fillText("GAME PAUSED",W/2,H/2);ctx.textAlign="left";}
+};
+
+function makeOnlineSnapshot(){
+  return {
+    players, zombies,
+    bullets:bullets.map(b=>({...b,hitEnemies:[]})),
+    fireZones,particles,railgunRays,
+    score,money,bossWave,bossKills,finalBossKills,normalKills,banditKills,
+    achievements,ownedWeapons:[...ownedWeapons],
+    running,gameWon,finalBattle,bossBattle,storeUnlocked,storeOpen,
+    gameClock,nextHordeTime,nextBossTime,nextBanditTime,
+    globalFireUntil,globalFireNextDamage
+  };
+}
+function applyOnlineSnapshot(s){
+  if(online.isHost||!online.active||!s)return;
+  players=s.players||players; player=players[0];
+  zombies=s.zombies||[]; bullets=(s.bullets||[]).map(b=>({...b,hitEnemies:new Set()}));
+  fireZones=s.fireZones||[];particles=s.particles||[];railgunRays=s.railgunRays||[];
+  score=s.score;money=s.money;bossWave=s.bossWave;bossKills=s.bossKills;
+  finalBossKills=s.finalBossKills;normalKills=s.normalKills;banditKills=s.banditKills;
+  achievements=s.achievements||[];ownedWeapons=new Set(s.ownedWeapons||["minigun"]);
+  gameWon=s.gameWon;finalBattle=s.finalBattle;bossBattle=s.bossBattle;
+  storeUnlocked=s.storeUnlocked;storeOpen=s.storeOpen;gameClock=s.gameClock;
+  nextHordeTime=s.nextHordeTime;nextBossTime=s.nextBossTime;nextBanditTime=s.nextBanditTime;
+  globalFireUntil=s.globalFireUntil;globalFireNextDamage=s.globalFireNextDamage;
+  running=s.running;
+  document.getElementById("storePanel").style.display=storeOpen?"block":"none";
+  document.getElementById("pauseBanner").style.display=storeOpen?"block":"none";
+  if(storeOpen)buildStore();
+  updateUI();
+}
+
+const originalGameLoop=gameLoop;
+gameLoop=function(now){
+  if(online.active&&!online.isHost){
+    const input={
+      up:!!keys["w"],down:!!keys["s"],left:!!keys["a"],right:!!keys["d"],
+      shoot:!!(players[1]&&players[1].shooting),
+      storeToggle:false,
+      weapon:online.remoteWeapon
+    };
+    if(online.socket&&online.socket.connected&&now-online.lastInputSent>40){
+      online.socket.emit("guest-input",input);online.lastInputSent=now;
+      online.remoteWeapon=null;
+    }
+  }
+  originalGameLoop(now);
+  if(online.active&&online.isHost&&online.socket&&online.socket.connected&&now-online.lastSnapshot>70){
+    online.socket.emit("snapshot",makeOnlineSnapshot());online.lastSnapshot=now;
+  }
+};
+
+const originalMouseDown=canvas.onmousedown;
+canvas.addEventListener("mousedown",e=>{
+  if(online.active&&!online.isHost&&e.button===0)players[1].shooting=true;
+});
+window.addEventListener("mouseup",()=>{
+  if(online.active&&!online.isHost&&players[1])players[1].shooting=false;
+});
+const originalKeyDownHandler=(e)=>{};
+window.addEventListener("keydown",e=>{
+  if(!online.active||online.isHost)return;
+  const k=e.key.toLowerCase();
+  if(["w","a","s","d"," "].includes(k))e.preventDefault();
+  if(k==="e")return; // Original handler calls the wrapped toggleStore() exactly once.
+  if(k==="q"||e.code==="ShiftRight"){
+    const unlocked=Object.keys(weaponData).filter(id=>ownedWeapons.has(id));
+    const idx=unlocked.indexOf(players[1].currentWeapon);
+    online.remoteWeapon=unlocked[(idx+1)%unlocked.length];
+  }
+  for(const id in weaponData){
+    if(weaponData[id].key===e.key&&ownedWeapons.has(id))online.remoteWeapon=id;
+  }
+});
+window.addEventListener("keydown",()=>{});
+window.addEventListener("keyup",()=>{});
+const oldReturnToMenu=returnToMenu;
+returnToMenu=function(){
+  if(online.active&&online.socket)online.socket.disconnect();
+  online.active=false;online.isHost=false;online.code="";
+  document.getElementById("onlineBadge").style.display="none";
+  return oldReturnToMenu();
+};
+const oldStartGame=startGame;
+startGame=function(count){
+  oldStartGame(count);
+  if(online.active){
+    numPlayers=2;
+    document.getElementById("modeStat").textContent="Online Co-op";
+    document.getElementById("controlsBanner").textContent=online.isHost
+      ?"ONLINE HOST: WASD + Mouse | E: Store"
+      :"ONLINE GUEST: WASD + Click to fire | Q / 1-8: Weapon | E: Store";
+  }
+};
+const oldResetGame=resetGame;
+resetGame=function(){
+  oldResetGame();
+  if(online.active)numPlayers=2;
+};
+const oldUpdateUI=updateUI;
+updateUI=function(){
+  oldUpdateUI();
+  if(online.active){
+    document.getElementById("modeStat").textContent="Online Co-op";
+    document.getElementById("p2HealthRow").style.display="block";
+    document.getElementById("p2WeaponRow").style.display="block";
+    document.getElementById("p2CooldownRow").style.display="block";
+  }
+};
+const oldUnlockAchievement=unlockAchievement;
+unlockAchievement=function(name,description,reward=0){
+  if(online.active&&!online.isHost)return;
+  return oldUnlockAchievement(name,description,reward);
+};
+
+if(inMenu){
+  const buttons=document.querySelector("#startMenu .menuButtons");
+  if(buttons&&!document.getElementById("onlineStartButton")){
+    const b=document.createElement("button");
+    b.id="onlineStartButton";b.textContent="🌐 ONLINE MULTIPLAYER";
+    b.onclick=onlineShowLobby;buttons.appendChild(b);
+  }
+}
+</script>
+</body>
+
+</html>
